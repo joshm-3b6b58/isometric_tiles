@@ -34,11 +34,20 @@ def world_to_iso(coord: Vec2) -> Vec2:
 
 
 @dataclass
+class Structure:
+    """Model for a structure"""
+
+    site_size: tuple[int, int]
+
+
+@dataclass
 class SiteModel:
     """Model for the individual grid site"""
 
     location: Vec2
+    structure_anchor: Structure = None
     selected: bool = False
+    occupied: bool = False
 
     def select(self):
         """Set this site as selected."""
@@ -47,6 +56,18 @@ class SiteModel:
     def disselect(self):
         """Set this site as not selected."""
         self.selected = False
+
+    def add_structure(self, structure):
+        """Add the ancor point of a structure."""
+        self.structure_anchor = structure
+
+    def occupy_site(self):
+        """Set site to occupied."""
+        self.occupied = True
+
+    def free_site(self):
+        """Free up site."""
+        self.occupied = False
 
 
 @dataclass
@@ -65,6 +86,37 @@ class WorldModel:
             for i in range(rows)
         ]
         self.sites = np.array(site_list, dtype=SiteModel)
+
+    def check_sites_buildable(self, xrange: tuple[int, int], yrange: tuple[int, int]):
+        """Check if entire range of sites is buildable."""
+        for site_x in range(*xrange):
+            for site_y in range(*yrange):
+                if self.sites[site_x, site_y].occupied is True:
+                    print(f"Site at {site_x},{site_y} is occupied, giving up")
+                    return False
+        return True
+
+    def build_structure(self, structure: Structure, site: tuple[int, int]):
+        """Allocate a structure to grid sites in the world.
+
+        Returns a true if site is built on, returns false if not.
+        """
+        start_x = site[0]
+        end_x = site[0] + structure.site_size[0]
+        start_y = site[1]
+        end_y = site[1] + structure.site_size[1]
+        print(f"x range: {start_x},{end_x} y range: {start_y}, {end_y}")
+        if self.check_sites_buildable((start_x, end_y), (start_y, end_y)):
+            for site_x in range(start_x, end_y):
+                for site_y in range(start_y, end_y):
+                    if self.sites[site_x, site_y].occupied is False:
+                        print(f"occupying site {site_y}")
+                        self.sites[site_x, site_y].occupy_site()
+        else:
+            return False
+
+        self.sites[site[0]][site[1]].add_structure(structure)
+        return True
 
 
 class LandTile(arcade.Sprite):
@@ -106,11 +158,12 @@ class GameView(arcade.View):
         self.camera = None
         self.background_color = (59, 107, 88, 255)
         self.grid_list = arcade.SpriteList()
-        self.foreground_list = arcade.SpriteList()
+        self.ui_sprite_list = arcade.SpriteList()
+        self.building_sprite_list = arcade.SpriteList()
         self.world_model = WorldModel(size=100)
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
         self.cursor.position = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
-        self.foreground_list.append(self.cursor)
+        self.ui_sprite_list.append(self.cursor)
         for x_idx, x in enumerate(self.world_model.sites):
             for y_idx, site in enumerate(x):
                 pos = world_to_iso(site.location)
@@ -138,7 +191,7 @@ class GameView(arcade.View):
         self.camera.use()
 
         self.grid_list.draw()
-        self.foreground_list.draw()
+        self.ui_sprite_list.draw()
 
     def on_update(self, delta_time):
         """
@@ -147,7 +200,7 @@ class GameView(arcade.View):
 
         cursor_grid_collisions = arcade.check_for_collision_with_list(
             self.cursor, self.grid_list
-        ) # Some kind of off by one collision to debug.
+        )  # Some kind of off by one collision to debug.
         self.camera.position = self.cursor.position
         if cursor_grid_collisions:
             if self.collided_grid is not cursor_grid_collisions[0]:
@@ -205,7 +258,6 @@ def main():
     game.setup()
     # Show GameView on screen
     window.show_view(game)
-
 
     # Start the arcade game loop
     arcade.run()
