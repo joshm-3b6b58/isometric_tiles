@@ -42,7 +42,6 @@ class SiteModel:
 
     def select(self):
         """Set this site as selected."""
-        print("seleceted")
         self.selected = True
 
     def disselect(self):
@@ -104,6 +103,7 @@ class GameView(arcade.View):
     def __init__(self):
         super().__init__()
 
+        self.camera = None
         self.background_color = (59, 107, 88, 255)
         self.grid_list = arcade.SpriteList()
         self.foreground_list = arcade.SpriteList()
@@ -121,6 +121,10 @@ class GameView(arcade.View):
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
 
+    def setup(self):
+        """Setup stuff for the level, that isn't in init."""
+        self.camera = arcade.Camera2D()
+
     def reset(self):
         """Reset the game to the initial state."""
         # Do changes needed to restart the game here if you want to support that
@@ -130,42 +134,41 @@ class GameView(arcade.View):
         """
         Render the screen.
         """
-
-        # This command should happen before we start drawing. It will clear
-        # the screen to the background color, and erase what we drew last frame.
         self.clear()
+        self.camera.use()
+
         self.grid_list.draw()
         self.foreground_list.draw()
-        # Call draw() on all your sprite lists below
 
     def on_update(self, delta_time):
         """
-        All the logic to move, and the game logic goes here.
-        Normally, you'll call update() on the sprite lists that
-        need it.
+        Handle update logic.
         """
 
         cursor_grid_collisions = arcade.check_for_collision_with_list(
             self.cursor, self.grid_list
-        )
+        ) # Some kind of off by one collision to debug.
+        self.camera.position = self.cursor.position
         if cursor_grid_collisions:
             if self.collided_grid is not cursor_grid_collisions[0]:
                 idx_old = self.collided_grid.un_collide_cursor()
                 self.world_model.sites[idx_old[0]][idx_old[1]].disselect()
                 idx = cursor_grid_collisions[0].collide_cursor()
                 self.world_model.sites[idx[0]][idx[1]].select()
-                print(f"Cursor on grid cell {idx}")
                 self.collided_grid = cursor_grid_collisions[0]
 
     def on_key_press(self, key, key_modifiers):
         """
         Called whenever a key on the keyboard is pressed.
-
-        For a full list of keys, see:
-        https://api.arcade.academy/en/latest/arcade.key.html
         """
         if key == arcade.key.UP:
             self.cursor.center_y += 10
+        elif key == arcade.key.DOWN:
+            self.cursor.center_y -= 10
+        elif key == arcade.key.LEFT:
+            self.cursor.center_x -= 10
+        elif key == arcade.key.RIGHT:
+            self.cursor.center_x += 10
 
     def on_key_release(self, key, key_modifiers):
         """
@@ -199,9 +202,10 @@ def main():
 
     # Create and setup the GameView
     game = GameView()
-
+    game.setup()
     # Show GameView on screen
     window.show_view(game)
+
 
     # Start the arcade game loop
     arcade.run()
