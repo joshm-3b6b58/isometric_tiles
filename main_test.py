@@ -35,11 +35,14 @@ def test_site_model():
 def test_world_model():
     """Test the array representation of the world model."""
     wm = WorldModel(size=2, tile_size=1)
-    assert wm.num_sites() == 2
-    assert_array_equal(wm.sites, [
-        [SiteModel(Vec2(0, 0)), SiteModel(Vec2(0, 1))],
-        [SiteModel(Vec2(1, 0)), SiteModel(Vec2(1, 1))],
-    ])
+    assert len(wm.sites) == 2
+    assert_array_equal(
+        wm.sites,
+        [
+            [SiteModel(Vec2(0, 0)), SiteModel(Vec2(0, 1))],
+            [SiteModel(Vec2(1, 0)), SiteModel(Vec2(1, 1))],
+        ],
+    )
     assert wm.sites[0][0].selected is False
     wm.sites[0][0].select()
     assert wm.sites[0][0].selected is True
