@@ -73,14 +73,32 @@ def test_world_model():
     assert wm.sites[2][2].occupied is False
 
     assert wm.check_sites_buildable((0, 3), (0, 3)) is True
+    """Should be empty and buildable. o is open, x is occupied:
+      0 1 2 3
+    0 o o o o
+    1 o o o o 
+    2 o o o o 
+    3 o o o o
+    """
 
     test_structure = Structure((2, 2))
 
-    assert wm.build_structure(site=(0, 0), structure=test_structure) is True
-    assert wm.sites[0][0].structure_anchor == test_structure
-    assert wm.sites[0][1].occupied is True
-    assert wm.sites[1][0].occupied is True
-    assert wm.sites[1][1].occupied is True
-    assert wm.check_sites_buildable((0, 1), (0, 1)) is False
+    assert wm.build_structure(site=(2, 2), structure=test_structure) is True
+    """Should be occupied from 2,2 to 1 1. o is open, x is occupied:
+      0 1 2 3
+    0 o o o o
+    1 o x x o 
+    2 o x x o 
+    3 o o o o
+    """
 
-    assert wm.build_structure(site=(1, 1), structure=test_structure) is False
+    assert wm.sites[2][2].structure_anchor == test_structure
+    assert wm.sites[0][1].occupied is False
+    assert wm.sites[1][0].occupied is False
+    assert wm.sites[1][1].occupied is True
+    assert wm.sites[0][0].occupied is False
+    assert wm.sites[2][1].occupied is True
+    assert wm.check_sites_buildable((0, 1), (0, 1)) is True
+    assert wm.check_sites_buildable((1, 2), (1, 2)) is False
+
+    assert wm.build_structure(site=(2, 2), structure=test_structure) is False

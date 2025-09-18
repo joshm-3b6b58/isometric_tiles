@@ -8,8 +8,7 @@ If Python and Arcade are installed, this example can be run from the command lin
 python -m arcade.examples.starting_template
 """
 
-import math
-from dataclasses import dataclass
+from dataclasses import dataclass, astuple
 
 import numpy as np
 import arcade
@@ -88,11 +87,13 @@ class WorldModel:
 
     def check_sites_buildable(self, xrange: tuple[int, int], yrange: tuple[int, int]):
         """Check if entire range of sites is buildable."""
+        print(f"Checking buildable for x:{xrange} y:{yrange}")
         for site_x in range(*xrange):
             for site_y in range(*yrange):
                 if self.sites[site_x, site_y].occupied is True:
                     print(f"Site at {site_x},{site_y} is occupied, giving up")
                     return False
+        print("site buildable")
         return True
 
     def build_structure(self, structure: Structure, site: tuple[int, int]):
@@ -100,21 +101,23 @@ class WorldModel:
 
         Returns a true if site is built on, returns false if not.
         """
-        start_x = site[0]
-        end_x = site[0] + structure.site_size[0]
-        start_y = site[1]
-        end_y = site[1] + structure.site_size[1]
+        start_x = site[0] - structure.site_size[0] + 1
+        end_x = site[0] + 1
+        start_y = site[1] - structure.site_size[1] + 1
+        end_y = site[1] + 1
         print(f"x range: {start_x},{end_x} y range: {start_y}, {end_y}")
-        if self.check_sites_buildable((start_x, end_y), (start_y, end_y)):
-            for site_x in range(start_x, end_y):
+        if self.check_sites_buildable((start_x, end_x), (start_y, end_y)):
+            print(f"Should be false: {self.sites[start_x][start_y].occupied}")
+            for site_x in range(start_x, end_x):
                 for site_y in range(start_y, end_y):
                     if self.sites[site_x, site_y].occupied is False:
-                        print(f"occupying site {site_y}")
+                        print(f"occupying site ({site_x},{site_y})")
                         self.sites[site_x, site_y].occupy_site()
         else:
             return False
 
         self.sites[site[0]][site[1]].add_structure(structure)
+        print(f"should be True: {self.sites[start_x][start_y].occupied}")
         return True
 
 
@@ -162,20 +165,19 @@ class GameView(arcade.View):
         self.current_site = None
         self.world_model = WorldModel(size=100)
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
-        self.cursor.position = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
         self.ui_sprite_list.append(self.cursor)
         for x in self.world_model.sites:
             for site in x:
                 pos = world_to_iso(site.location)
                 sprite = LandTile("grid_cell.png", "selected_grid_cell.png", site=site)
-                sprite.position = (-pos.x, -pos.y)
+                sprite.position = (pos.x, pos.y)
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
 
     def setup(self):
         """Setup stuff for the level, that isn't in init."""
         self.camera = arcade.Camera2D()
-        self.cursor.position = (-WINDOW_WIDTH / 2, -WINDOW_HEIGHT / 2)
+        self.cursor.position = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
 
     def reset(self):
         """Reset the game to the initial state."""
@@ -200,7 +202,7 @@ class GameView(arcade.View):
 
         cursor_grid_collisions = arcade.check_for_collision_with_list(
             self.cursor, self.grid_list
-        )  # Some kind of off by one collision to debug.
+        )
         self.camera.position = self.cursor.position
         if cursor_grid_collisions:
             if self.collided_grid is not cursor_grid_collisions[0]:
@@ -234,8 +236,9 @@ class GameView(arcade.View):
             structure=shed, site=self.current_site.index
         ):
             new_building = arcade.Sprite("shack.png")
-            pos = world_to_iso(self.current_site.location)
-            new_building.position = (-pos.x, -pos.y)
+            offset = Vec2(new_building.width / 2, new_building.height / 2)
+            pos = world_to_iso(self.current_site.location + offset)
+            new_building.position = (pos.x, pos.y)
             self.building_sprite_list.append(new_building)
         else:
             print("Site occupied, can't build.")
