@@ -1,22 +1,23 @@
-import numpy as np
+"""Tests for main.py."""
+
 from numpy.testing import assert_array_equal
-
-
-from main import world_to_iso, WorldModel, SiteModel, Structure
 from pytest import approx
 from arcade import Vec2
 
-# fix this later
-# def test_world_to_iso():
-#     """Test that the isometric conversions are correct for a unit square."""
-#     assert world_to_iso(Vec2(0, 0)).x == 0
-#     assert world_to_iso(Vec2(0, 0)).y == 0
-#     assert world_to_iso(Vec2(1, 0)).x == approx(0.866, rel=1e-3)
-#     assert world_to_iso(Vec2(1, 0)).y == approx(-0.5, rel=1e-3)
-#     assert world_to_iso(Vec2(0, 1)).x == approx(0.5, rel=1e-3)
-#     assert world_to_iso(Vec2(0, 1)).y == approx(0.866, rel=1e-3)
-#     assert world_to_iso(Vec2(1, 1)).x == approx(0.5 + 0.866, rel=1e-3)
-#     assert world_to_iso(Vec2(1, 1)).y == approx(0.866 - 0.5, rel=1e-3)
+
+from main import world_to_iso, WorldModel, SiteModel, Structure
+
+
+def test_world_to_iso():
+    """Test that the isometric conversions are correct for a unit square."""
+    assert world_to_iso(Vec2(0, 0)).x == 0
+    assert world_to_iso(Vec2(0, 0)).y == 0
+    assert world_to_iso(Vec2(1, 0)).x == approx(0.866, rel=1e-3)
+    assert world_to_iso(Vec2(1, 0)).y == approx(0.5, rel=1e-3)
+    assert world_to_iso(Vec2(0, 1)).x == approx(-0.866, rel=1e-3)
+    assert world_to_iso(Vec2(0, 1)).y == approx(0.5, rel=1e-3)
+    assert world_to_iso(Vec2(1, 1)).x == approx(0, rel=1e-3)
+    assert world_to_iso(Vec2(1, 1)).y == approx(1, rel=1e-3)
 
 
 def test_site_model():

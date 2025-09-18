@@ -1,20 +1,12 @@
-"""
-Starting Template
+"""Contains the whole game for now."""
 
-Once you have learned how to use classes, you can begin your program with this
-template.
-
-If Python and Arcade are installed, this example can be run from the command line with:
-python -m arcade.examples.starting_template
-"""
-
-from dataclasses import dataclass, astuple
+from dataclasses import dataclass
 
 import numpy as np
 import arcade
 from arcade import Vec2
 
-WINDOW_WIDTH = 640
+WINDOW_WIDTH = 480
 WINDOW_HEIGHT = 480
 WINDOW_TITLE = "Isometric Grid View"
 TILE_SIZE = 40
@@ -72,7 +64,6 @@ class SiteModel:
 class WorldModel:
     """Model of sites of the world."""
 
-    # numpy array of sites
     def __init__(self, size: int, tile_size: int = TILE_SIZE):
         cols = size
         rows = size
@@ -119,6 +110,10 @@ class WorldModel:
         self.sites[site[0]][site[1]].add_structure(structure)
         print(f"should be True: {self.sites[start_x][start_y].occupied}")
         return True
+
+
+class BuildAreaOverlay(arcade.SpriteSolidColor):
+    """A transparent overlay to show the build area."""
 
 
 class LandTile(arcade.Sprite):
