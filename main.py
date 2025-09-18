@@ -18,18 +18,16 @@ from arcade import Vec2
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 480
 WINDOW_TITLE = "Isometric Grid View"
-TILE_SIZE = 35
+TILE_SIZE = 40
 
 
 def world_to_iso(coord: Vec2) -> Vec2:
     """Convert world coordinates to view coordinates on the grid."""
-    angle_rad = math.radians(30)
     x = coord.x
     y = coord.y
 
-    rotated_x = x * math.cos(-angle_rad) - y * math.sin(-angle_rad)
-    rotated_y = x * math.sin(-angle_rad) + y * math.cos(-angle_rad)
-
+    rotated_x = (x - y) * np.sqrt(3) / 2
+    rotated_y = (x + y) / 2
     return Vec2(rotated_x, rotated_y)
 
 
@@ -166,17 +164,18 @@ class GameView(arcade.View):
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
         self.cursor.position = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
         self.ui_sprite_list.append(self.cursor)
-        for x_idx, x in enumerate(self.world_model.sites):
-            for y_idx, site in enumerate(x):
+        for x in self.world_model.sites:
+            for site in x:
                 pos = world_to_iso(site.location)
                 sprite = LandTile("grid_cell.png", "selected_grid_cell.png", site=site)
-                sprite.position = (pos.x, pos.y)
+                sprite.position = (-pos.x, -pos.y)
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
 
     def setup(self):
         """Setup stuff for the level, that isn't in init."""
         self.camera = arcade.Camera2D()
+        self.cursor.position = (-WINDOW_WIDTH / 2, -WINDOW_HEIGHT / 2)
 
     def reset(self):
         """Reset the game to the initial state."""
@@ -236,7 +235,7 @@ class GameView(arcade.View):
         ):
             new_building = arcade.Sprite("shack.png")
             pos = world_to_iso(self.current_site.location)
-            new_building.position = pos
+            new_building.position = (-pos.x, -pos.y)
             self.building_sprite_list.append(new_building)
         else:
             print("Site occupied, can't build.")
