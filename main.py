@@ -15,8 +15,8 @@ import numpy as np
 import arcade
 from arcade import Vec2
 
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
 WINDOW_TITLE = "Isometric Grid View"
 TILE_SIZE = 35
 
@@ -45,6 +45,7 @@ class SiteModel:
     """Model for the individual grid site"""
 
     location: Vec2
+    index: tuple[int, int]
     structure_anchor: Structure = None
     selected: bool = False
     occupied: bool = False
@@ -80,7 +81,7 @@ class WorldModel:
         rows = size
         site_list = [
             [
-                SiteModel(location=Vec2(i * tile_size, j * tile_size))
+                SiteModel(location=Vec2(i * tile_size, j * tile_size), index=(i, j))
                 for j in range(cols)
             ]
             for i in range(rows)
@@ -122,7 +123,7 @@ class WorldModel:
 class LandTile(arcade.Sprite):
     """A tile for the ground."""
 
-    def __init__(self, path_or_texture, hilite_path_or_texture, site: tuple[int, int]):
+    def __init__(self, path_or_texture, hilite_path_or_texture, site: SiteModel):
         super().__init__(path_or_texture)
         self.hilite_path_or_texture = (
             arcade.texture.default_texture_cache.load_or_get_texture(
@@ -160,6 +161,7 @@ class GameView(arcade.View):
         self.grid_list = arcade.SpriteList()
         self.ui_sprite_list = arcade.SpriteList()
         self.building_sprite_list = arcade.SpriteList()
+        self.current_site = None
         self.world_model = WorldModel(size=100)
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
         self.cursor.position = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
@@ -167,9 +169,7 @@ class GameView(arcade.View):
         for x_idx, x in enumerate(self.world_model.sites):
             for y_idx, site in enumerate(x):
                 pos = world_to_iso(site.location)
-                sprite = LandTile(
-                    "grid_cell.png", "selected_grid_cell.png", site=(x_idx, y_idx)
-                )
+                sprite = LandTile("grid_cell.png", "selected_grid_cell.png", site=site)
                 sprite.position = (pos.x, pos.y)
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
@@ -192,6 +192,7 @@ class GameView(arcade.View):
 
         self.grid_list.draw()
         self.ui_sprite_list.draw()
+        self.building_sprite_list.draw()
 
     def on_update(self, delta_time):
         """
@@ -204,9 +205,10 @@ class GameView(arcade.View):
         self.camera.position = self.cursor.position
         if cursor_grid_collisions:
             if self.collided_grid is not cursor_grid_collisions[0]:
-                idx_old = self.collided_grid.un_collide_cursor()
+                idx_old = self.collided_grid.un_collide_cursor().index
                 self.world_model.sites[idx_old[0]][idx_old[1]].disselect()
-                idx = cursor_grid_collisions[0].collide_cursor()
+                self.current_site = cursor_grid_collisions[0].collide_cursor()
+                idx = self.current_site.index
                 self.world_model.sites[idx[0]][idx[1]].select()
                 self.collided_grid = cursor_grid_collisions[0]
 
@@ -222,6 +224,22 @@ class GameView(arcade.View):
             self.cursor.center_x -= 10
         elif key == arcade.key.RIGHT:
             self.cursor.center_x += 10
+        elif key == arcade.key.SPACE:
+            self.build_building()
+
+    def build_building(self):
+        """Build a building, sync model and view."""
+        shed = Structure(site_size=(2, 2))
+        print(self.current_site)
+        if self.world_model.build_structure(
+            structure=shed, site=self.current_site.index
+        ):
+            new_building = arcade.Sprite("shack.png")
+            pos = world_to_iso(self.current_site.location)
+            new_building.position = pos
+            self.building_sprite_list.append(new_building)
+        else:
+            print("Site occupied, can't build.")
 
     def on_key_release(self, key, key_modifiers):
         """

@@ -21,7 +21,7 @@ def test_world_to_iso():
 
 def test_site_model():
     """Test the model for an individual site."""
-    site = SiteModel(location=Vec2(0, 0), selected=False)
+    site = SiteModel(location=Vec2(0, 0), index=(0, 0), selected=False)
 
     assert site.selected is False
     site.disselect()
@@ -38,28 +38,28 @@ def test_world_model():
     assert len(wm.sites) == 4
     compare_array = [
         [
-            SiteModel(Vec2(0, 0)),
-            SiteModel(Vec2(0, 1)),
-            SiteModel(Vec2(0, 2)),
-            SiteModel(Vec2(0, 3)),
+            SiteModel(Vec2(0, 0), index=(0, 0)),
+            SiteModel(Vec2(0, 1), index=(0, 1)),
+            SiteModel(Vec2(0, 2), index=(0, 2)),
+            SiteModel(Vec2(0, 3), index=(0, 3)),
         ],
         [
-            SiteModel(Vec2(1, 0)),
-            SiteModel(Vec2(1, 1)),
-            SiteModel(Vec2(1, 2)),
-            SiteModel(Vec2(1, 3)),
+            SiteModel(Vec2(1, 0), index=(1, 0)),
+            SiteModel(Vec2(1, 1), index=(1, 1)),
+            SiteModel(Vec2(1, 2), index=(1, 2)),
+            SiteModel(Vec2(1, 3), index=(1, 3)),
         ],
         [
-            SiteModel(Vec2(2, 0)),
-            SiteModel(Vec2(2, 1)),
-            SiteModel(Vec2(2, 2)),
-            SiteModel(Vec2(2, 3)),
+            SiteModel(Vec2(2, 0), index=(2, 0)),
+            SiteModel(Vec2(2, 1), index=(2, 1)),
+            SiteModel(Vec2(2, 2), index=(2, 2)),
+            SiteModel(Vec2(2, 3), index=(2, 3)),
         ],
         [
-            SiteModel(Vec2(3, 0)),
-            SiteModel(Vec2(3, 1)),
-            SiteModel(Vec2(3, 2)),
-            SiteModel(Vec2(3, 3)),
+            SiteModel(Vec2(3, 0), index=(3, 0)),
+            SiteModel(Vec2(3, 1), index=(3, 1)),
+            SiteModel(Vec2(3, 2), index=(3, 2)),
+            SiteModel(Vec2(3, 3), index=(3, 3)),
         ],
     ]
     assert_array_equal(wm.sites, compare_array)
