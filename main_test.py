@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 
-from main import world_to_iso, WorldModel, SiteModel
+from main import world_to_iso, WorldModel, SiteModel, Structure
 from pytest import approx
 from arcade import Vec2
 
@@ -34,15 +34,53 @@ def test_site_model():
 
 def test_world_model():
     """Test the array representation of the world model."""
-    wm = WorldModel(size=2, tile_size=1)
-    assert len(wm.sites) == 2
-    assert_array_equal(
-        wm.sites,
+    wm = WorldModel(size=4, tile_size=1)
+    assert len(wm.sites) == 4
+    compare_array = [
         [
-            [SiteModel(Vec2(0, 0)), SiteModel(Vec2(0, 1))],
-            [SiteModel(Vec2(1, 0)), SiteModel(Vec2(1, 1))],
+            SiteModel(Vec2(0, 0)),
+            SiteModel(Vec2(0, 1)),
+            SiteModel(Vec2(0, 2)),
+            SiteModel(Vec2(0, 3)),
         ],
-    )
+        [
+            SiteModel(Vec2(1, 0)),
+            SiteModel(Vec2(1, 1)),
+            SiteModel(Vec2(1, 2)),
+            SiteModel(Vec2(1, 3)),
+        ],
+        [
+            SiteModel(Vec2(2, 0)),
+            SiteModel(Vec2(2, 1)),
+            SiteModel(Vec2(2, 2)),
+            SiteModel(Vec2(2, 3)),
+        ],
+        [
+            SiteModel(Vec2(3, 0)),
+            SiteModel(Vec2(3, 1)),
+            SiteModel(Vec2(3, 2)),
+            SiteModel(Vec2(3, 3)),
+        ],
+    ]
+    assert_array_equal(wm.sites, compare_array)
     assert wm.sites[0][0].selected is False
     wm.sites[0][0].select()
     assert wm.sites[0][0].selected is True
+    assert wm.sites[2][2].occupied is False
+    wm.sites[2][2].occupy_site()
+    assert wm.sites[2][2].occupied is True
+    wm.sites[2][2].free_site()
+    assert wm.sites[2][2].occupied is False
+
+    assert wm.check_sites_buildable((0, 3), (0, 3)) is True
+
+    test_structure = Structure((2, 2))
+
+    assert wm.build_structure(site=(0, 0), structure=test_structure) is True
+    assert wm.sites[0][0].structure_anchor == test_structure
+    assert wm.sites[0][1].occupied is True
+    assert wm.sites[1][0].occupied is True
+    assert wm.sites[1][1].occupied is True
+    assert wm.check_sites_buildable((0, 1), (0, 1)) is False
+
+    assert wm.build_structure(site=(1, 1), structure=test_structure) is False
