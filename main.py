@@ -18,7 +18,7 @@ from arcade import Vec2
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 WINDOW_TITLE = "Isometric Grid View"
-TILE_SIZE = 32
+TILE_SIZE = 35
 
 
 def world_to_iso(coord: Vec2) -> Vec2:
@@ -41,36 +41,59 @@ class SiteModel:
     selected: bool = False
 
     def select(self):
+        """Set this site as selected."""
+        print("seleceted")
         self.selected = True
 
     def disselect(self):
+        """Set this site as not selected."""
         self.selected = False
 
 
 @dataclass
 class WorldModel:
-    """Model of entities of the world"""
+    """Model of sites of the world."""
 
     # numpy array of sites
     def __init__(self, size: int, tile_size: int = TILE_SIZE):
         cols = size
         rows = size
-        site_list = [[SiteModel(location=Vec2(i*tile_size,j*tile_size)) for j in range(cols)] for i in range(rows)]
+        site_list = [
+            [
+                SiteModel(location=Vec2(i * tile_size, j * tile_size))
+                for j in range(cols)
+            ]
+            for i in range(rows)
+        ]
         self.sites = np.array(site_list, dtype=SiteModel)
-
-    def num_sites(self):
-        return len(self.sites)
 
 
 class LandTile(arcade.Sprite):
     """A tile for the ground."""
-    def __init__(self, path_or_texture, hilite_path_or_texture):
-        super().__init__(path_or_texture)
-        self.hilite_path_or_texture = arcade.texture.default_texture_cache.load_or_get_texture(hilite_path_or_texture)
 
-    def change_texture(self):
+    def __init__(self, path_or_texture, hilite_path_or_texture, site: tuple[int, int]):
+        super().__init__(path_or_texture)
+        self.hilite_path_or_texture = (
+            arcade.texture.default_texture_cache.load_or_get_texture(
+                hilite_path_or_texture
+            )
+        )
+        self.default_texture = self.texture
+        self.site = site
+
+    def collide_cursor(self):
+        """Change the texture to the highligthed tile.
+
+        Returns the address of the site."""
         self.texture = self.hilite_path_or_texture
-    
+        return self.site
+
+    def un_collide_cursor(self):
+        """Change the texture to the default tile.
+
+        Returns the address of the site."""
+        self.texture = self.default_texture
+        return self.site
 
 
 class GameView(arcade.View):
@@ -83,12 +106,20 @@ class GameView(arcade.View):
 
         self.background_color = (59, 107, 88, 255)
         self.grid_list = arcade.SpriteList()
-        for x in range(-100, 100):
-            for y in range(-100, 100):
-                pos = world_to_iso(Vec2(x * 32, y * 32))
-                sprite = LandTile("grid_cell.png","selected_grid_cell.png")
+        self.foreground_list = arcade.SpriteList()
+        self.world_model = WorldModel(size=100)
+        self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
+        self.cursor.position = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+        self.foreground_list.append(self.cursor)
+        for x_idx, x in enumerate(self.world_model.sites):
+            for y_idx, site in enumerate(x):
+                pos = world_to_iso(site.location)
+                sprite = LandTile(
+                    "grid_cell.png", "selected_grid_cell.png", site=(x_idx, y_idx)
+                )
                 sprite.position = (pos.x, pos.y)
                 self.grid_list.append(sprite)
+        self.collided_grid = self.grid_list[0]
 
     def reset(self):
         """Reset the game to the initial state."""
@@ -104,6 +135,7 @@ class GameView(arcade.View):
         # the screen to the background color, and erase what we drew last frame.
         self.clear()
         self.grid_list.draw()
+        self.foreground_list.draw()
         # Call draw() on all your sprite lists below
 
     def on_update(self, delta_time):
@@ -112,7 +144,18 @@ class GameView(arcade.View):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
-        pass
+
+        cursor_grid_collisions = arcade.check_for_collision_with_list(
+            self.cursor, self.grid_list
+        )
+        if cursor_grid_collisions:
+            if self.collided_grid is not cursor_grid_collisions[0]:
+                idx_old = self.collided_grid.un_collide_cursor()
+                self.world_model.sites[idx_old[0]][idx_old[1]].disselect()
+                idx = cursor_grid_collisions[0].collide_cursor()
+                self.world_model.sites[idx[0]][idx[1]].select()
+                print(f"Cursor on grid cell {idx}")
+                self.collided_grid = cursor_grid_collisions[0]
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -122,8 +165,7 @@ class GameView(arcade.View):
         https://api.arcade.academy/en/latest/arcade.key.html
         """
         if key == arcade.key.UP:
-            for grid in self.grid_list:
-                grid.change_texture()
+            self.cursor.center_y += 10
 
     def on_key_release(self, key, key_modifiers):
         """
