@@ -1,11 +1,12 @@
 """Tests for main.py."""
 
 from numpy.testing import assert_array_equal
+import numpy as np
 from pytest import approx
 from arcade import Vec2
 
 
-from main import world_to_iso, WorldModel, SiteModel, Structure
+from main import world_to_iso, WorldModel, SiteModel, Structure, WordModelRec
 
 
 def test_world_to_iso():
@@ -103,3 +104,33 @@ def test_world_model():
     assert wm.check_sites_buildable((1, 2), (1, 2)) is False
 
     assert wm.build_structure(site=(2, 2), structure=test_structure) is False
+
+
+def test_world_model_rec():
+    wm = WordModelRec(size=3)
+    test_array_false = np.array(
+        [[False, False, False], [False, False, False], [False, False, False]]
+    )
+    test_array_idx = np.array(
+        [[(0, 0), (1, 0), (2, 0)], [(0, 1), (1, 1), (2, 1)], [(0, 2), (1, 2), (2, 2)]]
+    )
+
+    assert_array_equal(wm.sites.selected, test_array_false)
+    assert_array_equal(wm.sites.occupied, test_array_false)
+    assert_array_equal(wm.sites.idx, test_array_idx)
+
+    assert wm.check_sites_buildable((0, 2), (0, 2)) is True
+
+    wm.occupy_site((0, 0))
+    test_array_00_true = np.array(
+        [[True, False, False], [False, False, False], [False, False, False]]
+    )
+    assert_array_equal(wm.sites.occupied, test_array_00_true)
+    assert wm.check_sites_buildable((0, 2), (0, 2)) is False
+    test_structure = Structure((2, 2))
+    assert wm.build_structure(site=(1, 1), structure=test_structure) is True
+    test_array_built = np.array(
+        [[True, False, False], [False, True, True], [False, True, True]]
+    )
+    assert_array_equal(wm.sites.occupied, test_array_built)
+    assert wm.build_structure(site=(1, 1), structure=test_structure) is False

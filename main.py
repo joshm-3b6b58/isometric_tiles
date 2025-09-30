@@ -60,6 +60,60 @@ class SiteModel:
         self.occupied = False
 
 
+foo_sites = np.array(
+    [
+        [(1, "foo"), (0, "bar"), (0, "foo")],
+        [(0, "foo"), (0, "bar"), (0, "foo")],
+        [(0, "foo"), (0, "bar"), (0, "foo")],
+    ],
+    dtype=[("selected", bool), ("build", "<U6")],
+)
+rec_sites = foo_sites.view(np.recarray)
+
+
+@dataclass
+class WordModelRec:
+    """Model of sites of the world."""
+
+    def __init__(self, size: int, tile_size: int = TILE_SIZE):
+        cols = size
+        rows = size
+        site_list = [[((i, j), False, False) for i in range(cols)] for j in range(rows)]
+        self.ar_sites = np.array(
+            site_list,
+            dtype=[
+                ("idx", np.dtype((np.int32, 2))),
+                ("selected", bool),
+                ("occupied", bool),
+            ],
+        )
+        self.sites = self.ar_sites.view(np.recarray)
+
+    def check_sites_buildable(self, xrange: tuple[int, int], yrange: tuple[int, int]):
+        """Check if entire range of sites is buildable."""
+        if self.sites.occupied[xrange[0] : xrange[1], yrange[0] : yrange[1]].any():
+            return False
+        return True
+
+    def occupy_site(self, site: tuple[int, int]):
+        """Set site to occupied."""
+        self.sites.occupied[site] = True
+
+    def build_structure(self, structure: Structure, site: tuple[int, int]):
+        """Build structure at site."""
+
+        start_x = site[0]
+        end_x = site[0] +  structure.site_size[0]
+        start_y = site[1] 
+        end_y = site[1] + structure.site_size[1]
+        print(f"x range: {start_x},{end_x} y range: {start_y}, {end_y}")
+        if self.check_sites_buildable((start_x, end_x), (start_y, end_y)):
+            print("Building structure: ", self.sites.occupied[start_x:end_x, start_y:end_y] )
+            self.sites.occupied[start_x:end_x, start_y:end_y] = True
+            return True
+        return False
+
+
 @dataclass
 class WorldModel:
     """Model of sites of the world."""
