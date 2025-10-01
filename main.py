@@ -1,10 +1,12 @@
 """Contains the whole game for now."""
 
+from dataclasses import dataclass
+
 import numpy as np
 import arcade
 from arcade import Vec2
 
-from grid_view.world_model import WorldModelRec, Structure
+from grid_view.world_model import WorldModelRec, Structure, BuildingType
 from grid_view.custom_sprites import LandTile
 
 WINDOW_WIDTH = 480
@@ -26,6 +28,9 @@ def world_to_iso(coord: Vec2) -> Vec2:
 def grid_cell_to_world(cell: tuple[int, int], tile_size=TILE_SIZE) -> Vec2:
     """Convert grid cell to world coordinates."""
     return Vec2(cell[0] * tile_size, cell[1] * tile_size)
+
+
+structure_sprite_list = ["shack.png"]
 
 
 class GameView(arcade.View):
@@ -108,6 +113,22 @@ class GameView(arcade.View):
         elif key == arcade.key.SPACE:
             self.build_building()
 
+    def update_building_sprites(self):
+        """Update building sprites to match the model."""
+        self.building_sprite_list = arcade.SpriteList()
+        shape = self.world_model.structure_anchor.shape
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                building_id = self.world_model.structure_anchor[i][j]
+                if building_id != 0:
+                    new_building = arcade.Sprite(structure_sprite_list[building_id - 1])
+                    offset = Vec2(new_building.width / 2, new_building.height / 2)
+                    world_location = grid_cell_to_world((i, j))  # problem is here
+                    pos = world_to_iso(world_location + offset)
+                    new_building.position = (pos.x, pos.y)
+                    self.building_sprite_list.append(new_building)
+        self.building_sprite_list.sort(key=lambda x: x.bottom, reverse=True)
+
     def build_building(self):
         """Build a building, sync model and view."""
         shed = Structure(site_size=(2, 2), building_type=1)
@@ -116,12 +137,8 @@ class GameView(arcade.View):
             site=self.current_site,
             structure=shed,
         ):
-            new_building = arcade.Sprite("shack.png")
-            offset = Vec2(new_building.width / 2, new_building.height / 2)
-            world_location = grid_cell_to_world(self.current_site)
-            pos = world_to_iso(world_location + offset)
-            new_building.position = (pos.x, pos.y)
-            self.building_sprite_list.append(new_building)
+            self.update_building_sprites()
+
         else:
             print("Site occupied, can't build.")
 

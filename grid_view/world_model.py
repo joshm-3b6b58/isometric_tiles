@@ -55,14 +55,9 @@ class WorldModelRec:
         """Build structure at site."""
 
         start = site
-        end = tuple(a + b for a, b in zip(site, structure.site_size))
-        print(f"x range: {start[0]},{end[0]} y range: {start[1]}, {end[1]}")
+        end = (site[0] + structure.site_size[0], site[1] + structure.site_size[1])
         if self.check_sites_buildable(start, end):
-            print(
-                "Building structure: ",
-                self.occupied[start[0] : end[0], start[1] : end[1]],
-            )
             self.occupied[start[0] : end[0], start[1] : end[1]] = True
-            self.structure_anchor[site[0], site[1]] = structure.building_type
+            self.structure_anchor[site[0]][site[1]] = structure.building_type
             return True
         return False
