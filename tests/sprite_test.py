@@ -1,4 +1,6 @@
-from main import LandTile, SiteModel
+"""Test for custome sprites."""
+
+from grid_view.custom_sprites import LandTile
 import arcade
 
 

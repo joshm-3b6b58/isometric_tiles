@@ -1,10 +1,11 @@
 """Contains the whole game for now."""
 
-from dataclasses import dataclass
-
 import numpy as np
 import arcade
 from arcade import Vec2
+
+from grid_view.world_model import WorldModelRec, Structure
+from grid_view.custom_sprites import LandTile
 
 WINDOW_WIDTH = 480
 WINDOW_HEIGHT = 480
@@ -22,180 +23,9 @@ def world_to_iso(coord: Vec2) -> Vec2:
     return Vec2(rotated_x, rotated_y)
 
 
-@dataclass
-class Structure:
-    """Model for a structure"""
-
-    site_size: tuple[int, int]
-
-
-@dataclass
-class SiteModel:
-    """Model for the individual grid site"""
-
-    location: Vec2
-    index: tuple[int, int]
-    structure_anchor: Structure = None
-    selected: bool = False
-    occupied: bool = False
-
-    def select(self):
-        """Set this site as selected."""
-        self.selected = True
-
-    def disselect(self):
-        """Set this site as not selected."""
-        self.selected = False
-
-    def add_structure(self, structure):
-        """Add the ancor point of a structure."""
-        self.structure_anchor = structure
-
-    def occupy_site(self):
-        """Set site to occupied."""
-        self.occupied = True
-
-    def free_site(self):
-        """Free up site."""
-        self.occupied = False
-
-
-foo_sites = np.array(
-    [
-        [(1, "foo"), (0, "bar"), (0, "foo")],
-        [(0, "foo"), (0, "bar"), (0, "foo")],
-        [(0, "foo"), (0, "bar"), (0, "foo")],
-    ],
-    dtype=[("selected", bool), ("build", "<U6")],
-)
-rec_sites = foo_sites.view(np.recarray)
-
-
-@dataclass
-class WordModelRec:
-    """Model of sites of the world."""
-
-    def __init__(self, size: int, tile_size: int = TILE_SIZE):
-        cols = size
-        rows = size
-        site_list = [[((i, j), False, False) for i in range(cols)] for j in range(rows)]
-        self.ar_sites = np.array(
-            site_list,
-            dtype=[
-                ("idx", np.dtype((np.int32, 2))),
-                ("selected", bool),
-                ("occupied", bool),
-            ],
-        )
-        self.sites = self.ar_sites.view(np.recarray)
-
-    def check_sites_buildable(self, xrange: tuple[int, int], yrange: tuple[int, int]):
-        """Check if entire range of sites is buildable."""
-        if self.sites.occupied[xrange[0] : xrange[1], yrange[0] : yrange[1]].any():
-            return False
-        return True
-
-    def occupy_site(self, site: tuple[int, int]):
-        """Set site to occupied."""
-        self.sites.occupied[site] = True
-
-    def build_structure(self, structure: Structure, site: tuple[int, int]):
-        """Build structure at site."""
-
-        start_x = site[0]
-        end_x = site[0] +  structure.site_size[0]
-        start_y = site[1] 
-        end_y = site[1] + structure.site_size[1]
-        print(f"x range: {start_x},{end_x} y range: {start_y}, {end_y}")
-        if self.check_sites_buildable((start_x, end_x), (start_y, end_y)):
-            print("Building structure: ", self.sites.occupied[start_x:end_x, start_y:end_y] )
-            self.sites.occupied[start_x:end_x, start_y:end_y] = True
-            return True
-        return False
-
-
-@dataclass
-class WorldModel:
-    """Model of sites of the world."""
-
-    def __init__(self, size: int, tile_size: int = TILE_SIZE):
-        cols = size
-        rows = size
-        site_list = [
-            [
-                SiteModel(location=Vec2(i * tile_size, j * tile_size), index=(i, j))
-                for j in range(cols)
-            ]
-            for i in range(rows)
-        ]
-        self.sites = np.array(site_list, dtype=SiteModel)
-
-    def check_sites_buildable(self, xrange: tuple[int, int], yrange: tuple[int, int]):
-        """Check if entire range of sites is buildable."""
-        print(f"Checking buildable for x:{xrange} y:{yrange}")
-        for site_x in range(*xrange):
-            for site_y in range(*yrange):
-                if self.sites[site_x, site_y].occupied is True:
-                    print(f"Site at {site_x},{site_y} is occupied, giving up")
-                    return False
-        print("site buildable")
-        return True
-
-    def build_structure(self, structure: Structure, site: tuple[int, int]):
-        """Allocate a structure to grid sites in the world.
-
-        Returns a true if site is built on, returns false if not.
-        """
-        start_x = site[0] - structure.site_size[0] + 1
-        end_x = site[0] + 1
-        start_y = site[1] - structure.site_size[1] + 1
-        end_y = site[1] + 1
-        print(f"x range: {start_x},{end_x} y range: {start_y}, {end_y}")
-        if self.check_sites_buildable((start_x, end_x), (start_y, end_y)):
-            print(f"Should be false: {self.sites[start_x][start_y].occupied}")
-            for site_x in range(start_x, end_x):
-                for site_y in range(start_y, end_y):
-                    if self.sites[site_x, site_y].occupied is False:
-                        print(f"occupying site ({site_x},{site_y})")
-                        self.sites[site_x, site_y].occupy_site()
-        else:
-            return False
-
-        self.sites[site[0]][site[1]].add_structure(structure)
-        print(f"should be True: {self.sites[start_x][start_y].occupied}")
-        return True
-
-
-class BuildAreaOverlay(arcade.SpriteSolidColor):
-    """A transparent overlay to show the build area."""
-
-
-class LandTile(arcade.Sprite):
-    """A tile for the ground."""
-
-    def __init__(self, path_or_texture, hilite_path_or_texture, site: SiteModel):
-        super().__init__(path_or_texture)
-        self.hilite_path_or_texture = (
-            arcade.texture.default_texture_cache.load_or_get_texture(
-                hilite_path_or_texture
-            )
-        )
-        self.default_texture = self.texture
-        self.site = site
-
-    def collide_cursor(self):
-        """Change the texture to the highligthed tile.
-
-        Returns the address of the site."""
-        self.texture = self.hilite_path_or_texture
-        return self.site
-
-    def un_collide_cursor(self):
-        """Change the texture to the default tile.
-
-        Returns the address of the site."""
-        self.texture = self.default_texture
-        return self.site
+def grid_cell_to_world(cell: tuple[int, int], tile_size=TILE_SIZE) -> Vec2:
+    """Convert grid cell to world coordinates."""
+    return Vec2(cell[0] * tile_size, cell[1] * tile_size)
 
 
 class GameView(arcade.View):
@@ -212,13 +42,14 @@ class GameView(arcade.View):
         self.ui_sprite_list = arcade.SpriteList()
         self.building_sprite_list = arcade.SpriteList()
         self.current_site = None
-        self.world_model = WorldModel(size=100)
+        self.world_model = WorldModelRec(size=100)
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
         self.ui_sprite_list.append(self.cursor)
-        for x in self.world_model.sites:
-            for site in x:
-                pos = world_to_iso(site.location)
-                sprite = LandTile("grid_cell.png", "selected_grid_cell.png", site=site)
+        for row in self.world_model.idx:
+            for entry in row:
+                current_coord = grid_cell_to_world(entry)
+                pos = world_to_iso(current_coord)
+                sprite = LandTile("grid_cell.png", "selected_grid_cell.png", site=entry)
                 sprite.position = (pos.x, pos.y)
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
@@ -255,11 +86,11 @@ class GameView(arcade.View):
         self.camera.position = self.cursor.position
         if cursor_grid_collisions:
             if self.collided_grid is not cursor_grid_collisions[0]:
-                idx_old = self.collided_grid.un_collide_cursor().index
-                self.world_model.sites[idx_old[0]][idx_old[1]].disselect()
+                idx_old = self.collided_grid.un_collide_cursor()
+                # self.world_model.selected[idx_old[0]][idx_old[1]].disselect()
                 self.current_site = cursor_grid_collisions[0].collide_cursor()
-                idx = self.current_site.index
-                self.world_model.sites[idx[0]][idx[1]].select()
+                idx = self.current_site
+                # self.world_model.selected[idx[0]][idx[1]].select()
                 self.collided_grid = cursor_grid_collisions[0]
 
     def on_key_press(self, key, key_modifiers):
@@ -279,14 +110,16 @@ class GameView(arcade.View):
 
     def build_building(self):
         """Build a building, sync model and view."""
-        shed = Structure(site_size=(2, 2))
-        print(self.current_site)
+        shed = Structure(site_size=(2, 2), building_type=1)
+        print(f"current site is: {self.current_site}")
         if self.world_model.build_structure(
-            structure=shed, site=self.current_site.index
+            site=self.current_site,
+            structure=shed,
         ):
             new_building = arcade.Sprite("shack.png")
             offset = Vec2(new_building.width / 2, new_building.height / 2)
-            pos = world_to_iso(self.current_site.location + offset)
+            world_location = grid_cell_to_world(self.current_site)
+            pos = world_to_iso(world_location + offset)
             new_building.position = (pos.x, pos.y)
             self.building_sprite_list.append(new_building)
         else:
