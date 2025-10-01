@@ -1,8 +1,8 @@
 # Isometric Grid View
 
-Isometric Grid View is a Python application for visualizing and interacting with a tile-based world using isometric projection. Built with [arcade](https://api.arcade.academy/en/latest/) and [numpy](https://numpy.org/), it supports grid navigation, site selection, and building placement.
+Isometric Grid View is a Python application for visualizing and interacting with a tile-based world using isometric projection. Built with a model based on numpy arrays and a view to render this with [arcade](https://api.arcade.academy/en/latest/). This is intended to be a framework to be extended to support tile-base games, where the rules can be run the model and the View is only mean to render the model and provide an interface. 
 
-## Features
+## Current Features
 
 - Isometric rendering of a grid world
 - Customizable tile sprites
