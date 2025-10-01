@@ -1,36 +1,15 @@
 """Contains the whole game for now."""
 
-from dataclasses import dataclass
-
-import numpy as np
 import arcade
 from arcade import Vec2
 
-from grid_view.world_model import WorldModelRec, Structure, BuildingType
+from grid_view.world_model import WorldModelRec, Structure
 from grid_view.custom_sprites import LandTile
-
-WINDOW_WIDTH = 480
-WINDOW_HEIGHT = 480
-WINDOW_TITLE = "Isometric Grid View"
-TILE_SIZE = 40
+from grid_view.utils import world_to_iso, grid_cell_to_world
+from grid_view.constants import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE
 
 
-def world_to_iso(coord: Vec2) -> Vec2:
-    """Convert world coordinates to view coordinates on the grid."""
-    x = coord.x
-    y = coord.y
-
-    rotated_x = (x - y) * np.sqrt(3) / 2
-    rotated_y = (x + y) / 2
-    return Vec2(rotated_x, rotated_y)
-
-
-def grid_cell_to_world(cell: tuple[int, int], tile_size=TILE_SIZE) -> Vec2:
-    """Convert grid cell to world coordinates."""
-    return Vec2(cell[0] * tile_size, cell[1] * tile_size)
-
-
-structure_sprite_list = ["shack.png"]
+structure_sprite_list = ["assets/shack.png"]
 
 
 class GameView(arcade.View):
@@ -54,7 +33,9 @@ class GameView(arcade.View):
             for entry in row:
                 current_coord = grid_cell_to_world(entry)
                 pos = world_to_iso(current_coord)
-                sprite = LandTile("grid_cell.png", "selected_grid_cell.png", site=entry)
+                sprite = LandTile(
+                    "assets/grid_cell.png", "assets/selected_grid_cell.png", site=entry
+                )
                 sprite.position = (pos.x, pos.y)
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
@@ -138,7 +119,6 @@ class GameView(arcade.View):
             structure=shed,
         ):
             self.update_building_sprites()
-
         else:
             print("Site occupied, can't build.")
 

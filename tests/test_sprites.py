@@ -1,7 +1,8 @@
 """Test for custome sprites."""
 
-from grid_view.custom_sprites import LandTile
 import arcade
+
+from grid_view.custom_sprites import LandTile
 
 
 def test_land_tile():

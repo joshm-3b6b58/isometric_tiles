@@ -1,9 +1,9 @@
-"""Tests for main.py."""
+"""Test for helper functions."""
 
 from pytest import approx
 from arcade import Vec2
 
-from main import world_to_iso, grid_cell_to_world
+from grid_view.utils import world_to_iso, grid_cell_to_world
 
 
 def test_world_to_iso():
