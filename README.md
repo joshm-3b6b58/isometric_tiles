@@ -37,6 +37,7 @@ Use arrow keys to move the cursor. Press `SPACE` to build a structure at the sel
 ## Project Structure
 
 - `main.py`: Main game loop and view logic
+- `generate_graphics.py`: Simple tools for generating the isometric tile graphics.
 - `grid_view/`: Core modules
   - `constants.py`: App constants
   - `custom_sprites.py`: Custom sprite classes ([`LandTile`](grid_view/custom_sprites.py))
