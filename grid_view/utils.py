@@ -1,4 +1,5 @@
 """Helper funtions for grid view."""
+
 from arcade import Vec2
 import numpy as np
 

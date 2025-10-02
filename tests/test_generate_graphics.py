@@ -1,8 +1,10 @@
 """Tests for graphics generation."""
+
 import numpy as np
 from numpy.testing import assert_array_equal
 
 from generate_graphics import create_square_border_array
+
 
 def test_square():
     o = np.array([0, 0, 0, 0])

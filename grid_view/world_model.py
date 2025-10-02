@@ -41,7 +41,6 @@ class WorldModelRec:
     ) -> bool:
         """Check if entire range of sites is buildable."""
         sub_array = self.occupied[start[0] : end[0], start[1] : end[1]]
-        print(sub_array)
         if sub_array.any():
             return False
         return True
