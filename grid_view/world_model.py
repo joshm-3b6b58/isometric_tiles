@@ -9,9 +9,8 @@ import numpy as np
 class BuildingType(Enum):
     """Types of buildings."""
 
-    SHED = 1
-    HOUSE = 2
-    FACTORY = 3
+    SHACK = 1
+    PLANTER = 2
 
 
 @dataclass
