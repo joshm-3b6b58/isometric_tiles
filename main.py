@@ -6,10 +6,8 @@ from arcade import Vec2
 from grid_view.world_model import WorldModelRec, Structure
 from grid_view.custom_sprites import LandTile
 from grid_view.utils import world_to_iso, grid_cell_to_world
+from grid_view.building_registry import building_registry_by_type
 from grid_view.constants import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE
-
-
-structure_sprite_list = ["assets/shack.png"]
 
 
 class GameView(arcade.View):
@@ -112,7 +110,9 @@ class GameView(arcade.View):
             for j in range(shape[1]):
                 building_id = self.world_model.structure_anchor[i][j]
                 if building_id != 0:
-                    new_building = arcade.Sprite(structure_sprite_list[building_id - 1])
+                    new_building = arcade.Sprite(
+                        building_registry_by_type[building_id].sprite_path
+                    )
                     offset = Vec2(new_building.width / 2, new_building.height / 2)
                     world_location = grid_cell_to_world((i, j))  # problem is here
                     pos = world_to_iso(world_location + offset)
