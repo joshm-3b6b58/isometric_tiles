@@ -66,6 +66,20 @@ iso_img = Image.fromarray(
 rot_iso_img = iso_img.rotate(90, expand=True)
 rot_iso_img.save("assets/selected_grid_cell.png")
 
+
+iso_img = Image.fromarray(
+    convert_to_isometric(
+        create_square_border_array(
+            3 * TILE_SIZE,
+            border_width=2,
+            border_color=overlay_outline_color,
+            default_value=selected_fill_color,
+        )
+    )
+)
+rot_iso_img = iso_img.rotate(90, expand=True)
+rot_iso_img.save("assets/selected_3x3.png")
+
 iso_img = Image.fromarray(
     convert_to_isometric(
         create_square_border_array(

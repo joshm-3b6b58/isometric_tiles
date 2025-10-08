@@ -27,6 +27,12 @@ building_view_registry = [
         sprite_path="assets/planter.png",
         footprint_path="assets/selected_1x1.png",
     ),
+    BuildingView(
+        building_type=BuildingType.STICK_PILE,
+        building_name="Stick Pile",
+        sprite_path="assets/stick_pile.png",
+        footprint_path="assets/selected_3x3.png",
+    ),
 ]
 
 building_view_by_type = {sr.building_type.value: sr for sr in building_view_registry}
@@ -34,6 +40,7 @@ building_view_by_type = {sr.building_type.value: sr for sr in building_view_regi
 building_model_registry = [
     BuildingModel(building_type=BuildingType.SHACK, footprint=(2, 2)),
     BuildingModel(building_type=BuildingType.PLANTER, footprint=(1, 1)),
+    BuildingModel(building_type=BuildingType.STICK_PILE, footprint=(3, 3)),
 ]
 
 building_model_by_type = {bm.building_type.value: bm for bm in building_model_registry}

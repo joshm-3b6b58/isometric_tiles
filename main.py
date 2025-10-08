@@ -31,6 +31,7 @@ class GameView(arcade.View):
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
         self.ui_sprite_list.append(self.cursor)
         self.build_cycle = cycle(building_view_by_type.keys())
+        print(building_view_by_type)
         self.selected_building = next(self.build_cycle)  # Default to shack
         self.buildable_area_sprite = arcade.Sprite(
             building_view_by_type[self.selected_building].footprint_path
@@ -127,7 +128,9 @@ class GameView(arcade.View):
                     new_building = arcade.Sprite(
                         building_view_by_type[building_id].sprite_path
                     )
-                    offset = Vec2(0, new_building.height / 2) # This is almost certainly a mistake
+                    offset = Vec2(
+                        0, new_building.height / 2
+                    )  # This is almost certainly a mistake
                     world_location = grid_cell_to_world((i, j))
                     pos = world_to_iso(world_location) + offset
                     new_building.position = (pos.x, pos.y)

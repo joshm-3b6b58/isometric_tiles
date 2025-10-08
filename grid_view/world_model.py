@@ -11,6 +11,7 @@ class BuildingType(Enum):
 
     SHACK = 1
     PLANTER = 2
+    STICK_PILE = 3
 
 
 @dataclass
