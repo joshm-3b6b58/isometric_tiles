@@ -1,13 +1,15 @@
 """Contains the whole game for now."""
 
+from itertools import cycle
+
 import arcade
 from arcade import Vec2
 
-from grid_view.world_model import WorldModelRec, Structure
+from grid_view.world_model import WorldModelRec, BuildingModel
 from grid_view.custom_sprites import LandTile
 from grid_view.utils import world_to_iso, grid_cell_to_world
-from grid_view.building_registry import building_registry_by_type
-from grid_view.constants import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE
+from grid_view.building_registry import building_view_by_type, building_model_by_type
+from grid_view.constants import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, TILE_SIZE
 
 
 class GameView(arcade.View):
@@ -20,7 +22,6 @@ class GameView(arcade.View):
 
         self.camera = None
         self.background_color = (59, 107, 88, 255)
-        self.buildable_area_sprite = arcade.Sprite("assets/selected_2x2.png")
 
         self.grid_list = arcade.SpriteList()
         self.ui_sprite_list = arcade.SpriteList()
@@ -29,13 +30,21 @@ class GameView(arcade.View):
         self.world_model = WorldModelRec(size=100)
         self.cursor = arcade.SpriteCircle(5, arcade.color.RED)
         self.ui_sprite_list.append(self.cursor)
+        self.build_cycle = cycle(building_view_by_type.keys())
+        self.selected_building = next(self.build_cycle)  # Default to shack
+        self.buildable_area_sprite = arcade.Sprite(
+            building_view_by_type[self.selected_building].footprint_path
+        )
+
         for row in self.world_model.idx:
             for entry in row:
-                current_coord = grid_cell_to_world(entry)
-                pos = world_to_iso(current_coord)
+
                 sprite = LandTile(
                     "assets/grid_cell.png", "assets/selected_grid_cell.png", site=entry
                 )
+                offset = Vec2(TILE_SIZE / 2, TILE_SIZE / 2)
+                current_coord = grid_cell_to_world(entry)
+                pos = world_to_iso(current_coord + offset)
                 sprite.position = (pos.x, pos.y)
                 self.grid_list.append(sprite)
         self.collided_grid = self.grid_list[0]
@@ -89,6 +98,8 @@ class GameView(arcade.View):
             self.cursor.center_x -= 10
         elif key == arcade.key.RIGHT:
             self.cursor.center_x += 10
+        elif key == arcade.key.B:
+            self.selected_building = next(self.build_cycle)
         elif key == arcade.key.SPACE:
             self.highlight_buildarea()
 
@@ -96,10 +107,13 @@ class GameView(arcade.View):
         """Highlight the area to build."""
 
         current_cell = self.current_site
+        self.buildable_area_sprite.texture = arcade.load_texture(
+            building_view_by_type[self.selected_building].footprint_path
+        )
         world_location = grid_cell_to_world(current_cell)
-        offset = Vec2(16, 16)
-        pos = world_to_iso(world_location + offset)
-        self.buildable_area_sprite.position = (pos.x, pos.y)
+        offset = Vec2(0, self.buildable_area_sprite.height / 2)
+        pos = world_to_iso(world_location)
+        self.buildable_area_sprite.position = (pos.x, pos.y) + offset
         self.ui_sprite_list.append(self.buildable_area_sprite)
 
     def update_building_sprites(self):
@@ -111,22 +125,23 @@ class GameView(arcade.View):
                 building_id = self.world_model.structure_anchor[i][j]
                 if building_id != 0:
                     new_building = arcade.Sprite(
-                        building_registry_by_type[building_id].sprite_path
+                        building_view_by_type[building_id].sprite_path
                     )
-                    offset = Vec2(new_building.width / 2, new_building.height / 2)
-                    world_location = grid_cell_to_world((i, j))  # problem is here
-                    pos = world_to_iso(world_location + offset)
+                    offset = Vec2(0, new_building.height / 2) # This is almost certainly a mistake
+                    world_location = grid_cell_to_world((i, j))
+                    pos = world_to_iso(world_location) + offset
                     new_building.position = (pos.x, pos.y)
                     self.building_sprite_list.append(new_building)
         self.building_sprite_list.sort(key=lambda x: x.bottom, reverse=True)
+        self.building_sprite_list.sort(key=lambda y: y.bottom, reverse=True)
 
     def build_building(self):
         """Build a building, sync model and view."""
         self.ui_sprite_list.remove(self.buildable_area_sprite)
-        shed = Structure(site_size=(2, 2), building_type=1)
+        building = building_model_by_type[self.selected_building]
         if self.world_model.build_structure(
+            structure=building,
             site=self.current_site,
-            structure=shed,
         ):
             self.update_building_sprites()
 

@@ -14,11 +14,11 @@ class BuildingType(Enum):
 
 
 @dataclass
-class Structure:
+class BuildingModel:
     """Model for a structure"""
 
     building_type: BuildingType
-    site_size: tuple[int, int]
+    footprint: tuple[int, int]
 
 
 class WorldModelRec:
@@ -49,13 +49,13 @@ class WorldModelRec:
         """Set site to occupied."""
         self.occupied[site] = True
 
-    def build_structure(self, structure: Structure, site: tuple[int, int]) -> bool:
+    def build_structure(self, structure: BuildingModel, site: tuple[int, int]) -> bool:
         """Build structure at site."""
 
         start = site
-        end = (site[0] + structure.site_size[0], site[1] + structure.site_size[1])
+        end = (site[0] + structure.footprint[0], site[1] + structure.footprint[1])
         if self.check_sites_buildable(start, end):
             self.occupied[start[0] : end[0], start[1] : end[1]] = True
-            self.structure_anchor[site[0]][site[1]] = structure.building_type
+            self.structure_anchor[site[0]][site[1]] = structure.building_type.value
             return True
         return False

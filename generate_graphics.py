@@ -5,6 +5,7 @@ import numpy as np
 from arcade import Vec2
 
 from grid_view.utils import world_to_iso
+from grid_view.constants import TILE_SIZE
 
 outline_color = (217, 211, 217, 255)
 selected_outline_color = (198, 85, 80, 255)
@@ -58,7 +59,7 @@ rot_iso_img.save("assets/grid_cell.png")
 iso_img = Image.fromarray(
     convert_to_isometric(
         create_square_border_array(
-            32, border_width=3, border_color=selected_outline_color
+            TILE_SIZE, border_width=3, border_color=selected_outline_color
         )
     )
 )
@@ -68,7 +69,7 @@ rot_iso_img.save("assets/selected_grid_cell.png")
 iso_img = Image.fromarray(
     convert_to_isometric(
         create_square_border_array(
-            64,
+            2 * TILE_SIZE,
             border_width=2,
             border_color=overlay_outline_color,
             default_value=selected_fill_color,
@@ -77,3 +78,16 @@ iso_img = Image.fromarray(
 )
 rot_iso_img = iso_img.rotate(90, expand=True)
 rot_iso_img.save("assets/selected_2x2.png")
+
+iso_img = Image.fromarray(
+    convert_to_isometric(
+        create_square_border_array(
+            TILE_SIZE,
+            border_width=2,
+            border_color=overlay_outline_color,
+            default_value=selected_fill_color,
+        )
+    )
+)
+rot_iso_img = iso_img.rotate(90, expand=True)
+rot_iso_img.save("assets/selected_1x1.png")

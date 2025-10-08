@@ -3,7 +3,7 @@
 from numpy.testing import assert_array_equal
 import numpy as np
 
-from grid_view.world_model import WorldModelRec, Structure
+from grid_view.world_model import WorldModelRec, BuildingModel
 
 
 def test_world_model_rec():
@@ -37,7 +37,7 @@ def test_world_model_rec():
     assert_array_equal(wm.occupied, test_array_00_true)
     assert wm.check_sites_buildable((0, 0), (2, 2)) is False
 
-    test_structure = Structure(building_type=2, site_size=(2, 2))
+    test_structure = BuildingModel(building_type=2, footprint=(2, 2))
     assert wm.build_structure(site=(1, 1), structure=test_structure) is True
     test_array_built = np.array(
         [[True, False, False], [False, True, True], [False, True, True]]
